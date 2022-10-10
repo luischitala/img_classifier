@@ -1,0 +1,23 @@
+version: '3.4'
+# Generate the volume for the database
+
+services:
+# Main api declaration
+  app:
+    build: 
+      context: ..
+      dockerfile: ./deployment/api/Dockerfile
+    restart: on-failure
+    tty: true
+    stdin_open: true
+    ports:
+      - 8080:8000
+    volumes:
+      - .:/usr/src/app/v1
+    networks:
+      - saturdays
+
+#Declare the network to share the same between microservices
+networks:
+  saturdays:
+    driver: bridge
