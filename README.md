@@ -1,7 +1,7 @@
 # Saturdays 3ra edición despliegue de modelos
 
 ## Tabla de contenidos:
-- [ Saturdays 3ra edición despliegue de modelos](# Saturdays-3ra-edición-despliegue-de-modelos)
+- [ Saturdays 3ra edición despliegue de modelos](#Saturdays-3ra-edición-despliegue-de-modelos)
   - [Tabla de contenidos:](#table-of-contents)
   - [Descripción](#descripción)
   - [Requisitos:](#requisitos)
@@ -69,3 +69,6 @@ Si se ejecutó con docker la dirección es: [http:127.0.0.1:8080/docs](http://lo
 	El endpoint para la claficación de imágenes es: /upload
 
 	## Referencias y reconocimiento a:  [geeksforgeeks](https://www.geeksforgeeks.org/python-image-classification-using-keras)
+
+	https://towardsdatascience.com/implementing-fastapi-in-10-minutes-d161cdd7c075
+	https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt/
