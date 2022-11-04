@@ -1,12 +1,9 @@
-from fastapi import Depends, FastAPI, UploadFile, File, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi import FastAPI, UploadFile, File, HTTPException, status
 from pydantic import BaseModel
-from database.conection import connect_to_database
 from tortoise.contrib.fastapi import register_tortoise
 from tortoise.contrib.pydantic import pydantic_model_creator
 # Models
 from app.models import Client, Image
-from typing import Union
 #Classifier
 from tensorflow.keras.preprocessing.image import load_img
 
@@ -15,66 +12,6 @@ from keras.models import load_model
 
 # Tools
 import shutil
-
-# Mocks
-fake_users_db = {
-    "johndoe": {
-        "username": "johndoe",
-        "full_name": "John Doe",
-        "email": "johndoe@example.com",
-        "hashed_password": "fakehashedsecret",
-        "disabled": False,
-    },
-    "alice": {
-        "username": "alice",
-        "full_name": "Alice Wonderson",
-        "email": "alice@example.com",
-        "hashed_password": "fakehashedsecret2",
-        "disabled": True,
-    },
-}
-
-
-# Login
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-
-class User(BaseModel):
-    username: str
-    email: Union[str, None] = None
-    full_name: Union[str, None] = None
-    disabled: Union[bool, None] = None
-
-def fake_decode_token(token):
-    return User(
-        username=token + "fakedecoded", email="john@example.com", full_name="John Doe"
-    )
-
-async def get_current_user(token: str = Depends(oauth2_scheme)):
-    user = fake_decode_token(token)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    return user
-
-async def get_current_active_user(current_user: User = Depends(get_current_user)):
-    if current_user.disabled:
-        raise HTTPException(status_code=400, detail="Inactive user")
-    return current_user
-
-def fake_hash_password(password: str):
-    return "fakehashed" + password
-
-class UserInDB(User):
-    hashed_password: str
-
-
-def get_user(db, username: str):
-    if username in db:
-        user_dict = db[username]
-        return UserInDB(**user_dict)
 
 
 # 1. Define an API object
@@ -94,7 +31,12 @@ class Msg(BaseModel):
 async def root():
     return {"message": "Hello World. Welcome to the API home page!"}
 
-
+"""
+Endpoint para realizar la clasificación de imágenes
+Recibe datos mediante form-data, el campo a enviar es "file"
+Una vez realizda la clasificación, se guarda en un directorio interno
+y escribe en una base de datos el resultado de la clasificación.
+"""
 @app.post("/upload")
 async def upload(file: UploadFile = File(...)):
     file_location = f"files/{file.filename}"
@@ -102,10 +44,9 @@ async def upload(file: UploadFile = File(...)):
         contents = file.file.read()
         with open(file_location, 'wb') as f:
             f.write(contents)
-        model = load_model('model_saved.h5')
+        model = load_model('models/classifier.h5')
   
         image = load_img(file_location, target_size=(224, 224))
-        #image = load_img('v_data/test/planes/5.jpg', target_size=(224, 224))
         img = np.array(image)
         img = img / 255.0
         img = img.reshape(1,224,224,3)
@@ -121,20 +62,29 @@ async def upload(file: UploadFile = File(...)):
         print(client)
         # Add log
         print(f"You Submitted a {result} photo")
-        moved_message = f"Once classifed the photo will be moved to the /{result} folder"
+        moved_message = f"Image moved to /{result} folder"
         # Generate the new url once classifed
         file_location_category = f"files/{result}/{file.filename}"
         shutil.move(file_location, file_location_category)
         image = await Image.create(url=file_location, description=result, category=category, client_id=client.id)
     
     except Exception:
-        return {"message": "There was an error uploading the file"}
+        data = {
+            "status":status.HTTP_500_INTERNAL_SERVER_ERROR,
+            "message": "There was an error uploading the file", 
+            "data":{}
+        }
+        raise HTTPException(status_code=500, detail=data)
     finally:
         file.file.close()
+    
+    data = {
+        "classifier_result":result,
+        "file_message":moved_message
+    }
 
-    return {"upload_message": f"Successfully uploaded {file.filename}", "classifier_result": result, "file_message": moved_message}
+    return {"status":status.HTTP_200_OK,"message": f"Successfully uploaded {file.filename}", "data":data}
 
-# !uvicorn main:app --reload
 
 register_tortoise(
     app,

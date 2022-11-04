@@ -16,6 +16,7 @@ COPY /* /code/
 COPY /database /code/database
 COPY /app /code/app
 COPY /files /code/files
+COPY /models /code/models
 
 
 # Run the application 

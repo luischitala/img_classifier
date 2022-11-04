@@ -59,6 +59,7 @@ Se puede acceder a dos jupyter notebooks, las cuales están localizadas en la ca
     ```
 4. Correr la aplicación
     ```bash
+    cd api/
     uvicorn main:app --reload
     ```
 ## Uso Básico
@@ -70,5 +71,5 @@ El endpoint para la claficación de imágenes es: /upload
 
 ## Referencias y reconocimiento a:  [geeksforgeeks](https://www.geeksforgeeks.org/python-image-classification-using-keras)
 
-https://towardsdatascience.com/implementing-fastapi-in-10-minutes-d161cdd7c075
+https://towardsdatascience.com/implementing-fastapi-in-10-minutes-d161cdd7c075  
 https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt/
